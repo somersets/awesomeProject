@@ -1,0 +1,32 @@
+version: '3.9'
+services:
+  api:
+    image: awesome-api:latest
+    restart: always
+    build: ./
+    container_name: "awesome-api"
+    command: ./bin/bin
+    ports:
+      - "8080:8080"
+    networks:
+      - awesome-network
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+  postgres:
+    container_name: 'postgres-db'
+    restart: always
+    image: postgres
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=awesomeProject
+      - POSTGRES_USER=postgres
+    networks:
+      - awesome-network
+    ports:
+      - "5443:5432"
+networks:
+  awesome-network:
+    driver: bridge

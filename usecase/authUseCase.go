@@ -4,11 +4,13 @@ import (
 	"awesomeProject/domain"
 	"awesomeProject/usecase/repository"
 	"awesomeProject/usecase/repository/auth"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type Auth interface {
 	Login(loginForm *domain.LoginFormDTO) (*domain.LoginResponseDTO, error)
 	Register(user *domain.User) (*domain.RegisterResponseDTO, error)
+	Logout(refreshToken string) error
 }
 
 type authUseCase struct {
@@ -23,6 +25,18 @@ func NewAuthUseCase(aR auth.AuthRepository, tR repository.TokensRepository, dbR 
 		tokensRepository: tR,
 		dbRepository:     dbR,
 	}
+}
+
+func (auc *authUseCase) Logout(refreshToken string) error {
+	user, validateErr := auc.tokensRepository.ValidateRefreshToken(refreshToken)
+	if validateErr != nil {
+		return jwt.ErrTokenExpired
+	}
+	err := auc.tokensRepository.RemoveRefreshToken(user.ID)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (auc *authUseCase) Login(loginForm *domain.LoginFormDTO) (*domain.LoginResponseDTO, error) {

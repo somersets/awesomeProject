@@ -8,7 +8,6 @@ type Tokens struct {
 }
 
 type JWTPayload struct {
-	Exp                  string
-	User                 UserDTO
-	jwt.RegisteredClaims `json:"-"`
+	UserId int
+	jwt.RegisteredClaims
 }

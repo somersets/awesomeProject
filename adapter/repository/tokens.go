@@ -26,13 +26,19 @@ func (tR tokensRepository) FindRefreshToken(refreshToken string) (*domain.Token,
 	return tokenData, nil
 }
 
-func (tR tokensRepository) RemoveRefreshToken(refreshToken string) (*domain.Token, error) {
-	err := tR.db.Model(&domain.Token{}).Where("refresh_token = ?", refreshToken).Delete(&domain.Token{}).Error
-
-	return nil, err
+func (tR tokensRepository) RemoveRefreshToken(userId int) error {
+	var user *domain.User
+	if err := tR.db.Model(&domain.User{}).Where("id = ?", userId).First(&user).Error; err != nil {
+		return err
+	}
+	err := tR.db.Model(&domain.Token{}).Where("user_id = ?", userId).Delete(&domain.Token{}).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func validateToken(tokenString string, tokenKey []byte) (*domain.UserDTO, error) {
+func validateToken(tokenString string, tokenKey []byte) (*int, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &domain.JWTPayload{}, func(token *jwt.Token) (interface{}, error) {
 		return tokenKey, nil
 	})
@@ -42,31 +48,31 @@ func validateToken(tokenString string, tokenKey []byte) (*domain.UserDTO, error)
 	}
 
 	if claims, ok := token.Claims.(*domain.JWTPayload); ok && token.Valid {
-		return &claims.User, nil
+		return &claims.UserId, nil
 	} else {
 		return nil, jwt.ErrTokenExpired
 	}
 }
 
-func ValidateAccessToken(accessToken string) (*domain.UserDTO, error) {
+func ValidateAccessToken(accessToken string) (*int, error) {
 	accessSecret := os.Getenv("SECRET_ACCESS_TOKEN")
 	myAccessTokenKey := []byte(accessSecret)
 
-	if user, err := validateToken(accessToken, myAccessTokenKey); err != nil {
+	if id, err := validateToken(accessToken, myAccessTokenKey); err != nil {
 		return nil, err
 	} else {
-		return user, nil
+		return id, nil
 	}
 }
 
 func (tR tokensRepository) ValidateRefreshToken(refreshToken string) (*domain.User, error) {
 	refreshSecret := os.Getenv("SECRET_REFRESH_TOKEN")
 	myRefreshTokenKey := []byte(refreshSecret)
-	if user, err := validateToken(refreshToken, myRefreshTokenKey); err != nil {
+	if id, err := validateToken(refreshToken, myRefreshTokenKey); err != nil {
 		return nil, err
 	} else {
 		var userData *domain.User
-		errUser := tR.db.Model(&domain.User{}).Where("id = ?", user.ID).First(&userData).Error
+		errUser := tR.db.Model(&domain.User{}).Where("id = ?", id).First(&userData).Error
 		if errUser != nil {
 			return nil, errUser
 		}
@@ -99,15 +105,20 @@ func (tR tokensRepository) GenerateTokens(user *domain.UserDTO) (*domain.Tokens,
 	myAccessTokenKey := []byte(accessSecret)
 	myRefreshTokenKey := []byte(refreshSecret)
 
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"exp":  time.Now().Add(10 * time.Minute),
-		"user": user,
-		"iat":  jwt.NewNumericDate(time.Now()),
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, &domain.JWTPayload{
+		user.ID,
+		jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Minute)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
 	})
 
-	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"exp":  time.Now().Add(30 * time.Minute),
-		"user": user,
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, &domain.JWTPayload{
+		user.ID,
+		jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
 	})
 
 	accessTokenString, err := accessToken.SignedString(myAccessTokenKey)

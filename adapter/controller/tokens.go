@@ -34,7 +34,7 @@ func (tC *tokensController) RefreshToken(ctx *gin.Context) {
 
 	refreshTokenResponse, err := tC.tokensUseCase.RefreshToken(token)
 	if err != nil {
-		utils.NewErrorResponse(ctx, http.StatusBadRequest, err.Error())
+		utils.NewErrorResponse(ctx, http.StatusUnauthorized, err.Error())
 		return
 	}
 

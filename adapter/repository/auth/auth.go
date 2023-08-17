@@ -36,12 +36,12 @@ func (aR *authRepository) LoginUser(loginForm *domain.LoginFormDTO) (*domain.Use
 }
 
 func (aR *authRepository) CreateUser(user *domain.User) (*domain.User, error) {
-	var alreadyExistUser *domain.User
-	if err := aR.db.Model(&domain.User{}).Where("email = ? OR phone = ?", user.Email, user.Phone).First(&alreadyExistUser).Error; err == nil {
-		if alreadyExistUser.Email == user.Email {
+	var dbUser *domain.User
+	if err := aR.db.Model(&domain.User{}).Where("email = ? OR phone = ?", user.Email, user.Phone).First(&dbUser).Error; err == nil {
+		if dbUser.Email == user.Email {
 			return nil, errors.New(fmt.Sprintf("A user with email %s already existing", user.Email))
 		}
-		if alreadyExistUser.Phone == user.Phone {
+		if dbUser.Phone == user.Phone {
 			return nil, errors.New(fmt.Sprintf("A user with phone %d already existing", user.Phone))
 		}
 	}

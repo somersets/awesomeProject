@@ -18,10 +18,27 @@ type Auth interface {
 	Login(c *gin.Context)
 	Register(c *gin.Context)
 	Logout(c *gin.Context)
+	Activate(c *gin.Context)
 }
 
 func NewAuthController(auc *usecase.Auth) Auth {
 	return &authController{*auc}
+}
+
+func (ac *authController) Activate(ctx *gin.Context) {
+	linkUUID := ctx.Param("uuid")
+	if len(linkUUID) == 0 {
+		utils.NewErrorResponse(ctx, http.StatusBadRequest, errors.New("empty activation link uuid parameter").Error())
+		return
+	}
+
+	loginResponse, err := ac.authUseCase.Activate(linkUUID)
+	if err != nil {
+		utils.NewErrorResponse(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+	ctx.SetCookie("refreshToken", loginResponse.RefreshToken, 30*24*60*60*1000, "", "localhost", true, true)
+	ctx.JSON(http.StatusOK, loginResponse)
 }
 
 func (ac *authController) Register(ctx *gin.Context) {
@@ -30,9 +47,6 @@ func (ac *authController) Register(ctx *gin.Context) {
 		utils.NewErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
-
-	hashPass, _ := utils.HashPassword(*user.Password)
-	user.Password = &hashPass
 
 	registerResponseDTO, err := ac.authUseCase.Register(user)
 	if err != nil {
@@ -52,7 +66,6 @@ func (ac *authController) Login(ctx *gin.Context) {
 
 	if loginResponse, err := ac.authUseCase.Login(loginForm); err != nil {
 		utils.NewErrorResponse(ctx, http.StatusBadRequest, err.Error())
-		return
 	} else {
 		ctx.SetCookie("refreshToken", loginResponse.RefreshToken, 30*24*60*60*1000, "", "localhost", true, true)
 		ctx.JSON(http.StatusOK, loginResponse)
@@ -89,4 +102,6 @@ func (ac *authController) Logout(ctx *gin.Context) {
 	}
 
 	ctx.SetCookie(clearCookie.Name, clearCookie.Value, clearCookie.MaxAge, clearCookie.Path, clearCookie.Domain, clearCookie.Secure, clearCookie.HttpOnly)
+
+	utils.NewSuccessResponse(ctx, http.StatusBadRequest, "OK")
 }

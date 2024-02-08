@@ -17,9 +17,9 @@ func NewTokensRepository(db *gorm.DB) repository.TokensRepository {
 	return &tokensRepository{db: db}
 }
 
-func (tR tokensRepository) FindRefreshToken(refreshToken string) (*domain.Token, error) {
+func (tR tokensRepository) FindRefreshToken(userId int) (*domain.Token, error) {
 	var tokenData *domain.Token
-	if err := tR.db.Model(&domain.Token{}).Where("refresh_token = ?", refreshToken).First(&tokenData).Error; err != nil {
+	if err := tR.db.Model(&domain.Token{}).Where("user_id = ?", userId).First(&tokenData).Error; err != nil {
 		return nil, err
 	}
 
@@ -38,7 +38,7 @@ func (tR tokensRepository) RemoveRefreshToken(userId int) error {
 	return nil
 }
 
-func validateToken(tokenString string, tokenKey []byte) (*int, error) {
+func ValidateToken(tokenString string, tokenKey []byte) (*int, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &domain.JWTPayload{}, func(token *jwt.Token) (interface{}, error) {
 		return tokenKey, nil
 	})
@@ -58,7 +58,7 @@ func ValidateAccessToken(accessToken string) (*int, error) {
 	accessSecret := os.Getenv("SECRET_ACCESS_TOKEN")
 	myAccessTokenKey := []byte(accessSecret)
 
-	if id, err := validateToken(accessToken, myAccessTokenKey); err != nil {
+	if id, err := ValidateToken(accessToken, myAccessTokenKey); err != nil {
 		return nil, err
 	} else {
 		return id, nil
@@ -68,7 +68,7 @@ func ValidateAccessToken(accessToken string) (*int, error) {
 func (tR tokensRepository) ValidateRefreshToken(refreshToken string) (*domain.User, error) {
 	refreshSecret := os.Getenv("SECRET_REFRESH_TOKEN")
 	myRefreshTokenKey := []byte(refreshSecret)
-	if id, err := validateToken(refreshToken, myRefreshTokenKey); err != nil {
+	if id, err := ValidateToken(refreshToken, myRefreshTokenKey); err != nil {
 		return nil, err
 	} else {
 		var userData *domain.User
@@ -106,17 +106,17 @@ func (tR tokensRepository) GenerateTokens(user *domain.UserDTO) (*domain.Tokens,
 	myRefreshTokenKey := []byte(refreshSecret)
 
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, &domain.JWTPayload{
-		user.ID,
-		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Minute)),
+		UserId: user.ID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(50 * time.Minute)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	})
 
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, &domain.JWTPayload{
-		user.ID,
-		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * time.Minute)),
+		UserId: user.ID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(60 * time.Minute)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	})

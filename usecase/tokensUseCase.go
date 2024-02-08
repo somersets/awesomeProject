@@ -29,9 +29,13 @@ func (auc *tokensUseCase) RefreshToken(refreshToken string) (*domain.RefreshToke
 	}
 
 	user, validateTokenErr := auc.tokensRepository.ValidateRefreshToken(refreshToken)
-	_, tokenErrExist := auc.tokensRepository.FindRefreshToken(refreshToken)
 
-	if validateTokenErr != nil || tokenErrExist != nil {
+	if validateTokenErr != nil {
+		return nil, errors.New("unauthorized error")
+	}
+
+	_, tokenErrExist := auc.tokensRepository.FindRefreshToken(user.ID)
+	if tokenErrExist != nil {
 		return nil, errors.New("unauthorized error")
 	}
 
@@ -40,7 +44,6 @@ func (auc *tokensUseCase) RefreshToken(refreshToken string) (*domain.RefreshToke
 	if tokensErr != nil {
 		return nil, tokensErr
 	}
-
 	_, err := auc.tokensRepository.SaveRefreshToken(user.ID, tokens.RefreshToken)
 	if err != nil {
 		return nil, err
@@ -49,6 +52,5 @@ func (auc *tokensUseCase) RefreshToken(refreshToken string) (*domain.RefreshToke
 	return &domain.RefreshTokenResponseDTO{
 		AccessToken:  tokens.AccessToken,
 		RefreshToken: tokens.RefreshToken,
-		User:         *userDTO,
 	}, nil
 }

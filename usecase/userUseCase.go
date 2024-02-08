@@ -7,8 +7,10 @@ import (
 
 type User interface {
 	Disable(id int) (int, error)
-	Create(u *domain.User) (*domain.User, error)
+	Create(u *domain.User) (*domain.UserDTO, error)
 	GetOneById(userId int) (*domain.UserDTO, error)
+	Update(userFormUpdate *domain.UserProfileUpdateForm, userId int) (*domain.UserDTO, error)
+	GetSexOrientations() ([]*domain.UserSexualOrientationType, error)
 }
 
 type userUseCase struct {
@@ -18,6 +20,25 @@ type userUseCase struct {
 
 func NewUserUseCase(uR repository.UserRepository, dbR repository.DBRepository) User {
 	return &userUseCase{userRepository: uR, dbRepository: dbR}
+}
+
+func (usc *userUseCase) GetSexOrientations() ([]*domain.UserSexualOrientationType, error) {
+	orientations, err := usc.userRepository.GetSexOrientations()
+	if err != nil {
+		return nil, err
+	}
+
+	return orientations, nil
+}
+
+func (usc *userUseCase) Update(userFormUpdate *domain.UserProfileUpdateForm, userId int) (*domain.UserDTO, error) {
+	user, err := usc.userRepository.UpdateUser(userFormUpdate, userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (usc *userUseCase) GetOneById(userId int) (*domain.UserDTO, error) {
@@ -30,8 +51,8 @@ func (usc *userUseCase) GetOneById(userId int) (*domain.UserDTO, error) {
 	return user, nil
 }
 
-func (usc *userUseCase) Create(user *domain.User) (*domain.User, error) {
-	user, err := usc.userRepository.CreateUser(user)
+func (usc *userUseCase) Create(user *domain.User) (*domain.UserDTO, error) {
+	createdUser, err := usc.userRepository.CreateUser(user)
 	/*data, err := usc.dbRepository.Transaction(func(i interface{}) (interface{}, error) {
 
 		// do mailing
@@ -49,7 +70,7 @@ func (usc *userUseCase) Create(user *domain.User) (*domain.User, error) {
 		return nil, err
 	}
 
-	return user, nil
+	return createdUser, nil
 }
 
 func (usc *userUseCase) Disable(id int) (int, error) {

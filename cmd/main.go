@@ -6,6 +6,7 @@ import (
 )
 
 func main() {
+	infrastructure.LoadEnv()
 	config := infrastructure.NewConfig()
 	api := infrastructure.NewApi(config)
 

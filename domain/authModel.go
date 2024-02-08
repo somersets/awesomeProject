@@ -5,7 +5,7 @@ import (
 )
 
 type Token struct {
-	ID           uint       `gorm:"primarykey"`
+	ID           int        `gorm:"primary_key"`
 	RefreshToken string     `gorm:"not null"`
 	UserId       int        `gorm:"not null" gorm:"foreignKey:id"`
 	CreatedAt    *time.Time `gorm:"autoCreateTime" json:"created_at"`

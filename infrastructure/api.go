@@ -19,20 +19,20 @@ func (api *API) Start() error {
 	if err := api.configureLoggerField(); err != nil {
 		return err
 	}
-	postgre, err := api.newPostgre()
-	if err != nil {
-		return err
-	}
+	db, dbErr := api.configureStorageField()
 
+	if dbErr != nil {
+		return dbErr
+	}
 	api.logger.Info("starting api server at port:", api.config.ServerPort)
 
-	r := rootRegistry.NewRegistry(postgre)
+	r := rootRegistry.NewRegistry(db)
 	appController := r.NewAppController()
 
-	err = api.newServer(router.InitRoutes(&appController))
-
+	err := api.newServer(router.InitRoutes(&appController))
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

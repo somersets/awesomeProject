@@ -18,10 +18,59 @@ type User interface {
 	Disable(c *gin.Context)
 	CreateUser(c *gin.Context)
 	GetUserById(c *gin.Context)
+	CurrentUser(c *gin.Context)
+	UpdateUser(c *gin.Context)
+	GetSexOrientations(c *gin.Context)
 }
 
 func NewUserController(us *usecase.User) User {
 	return &userController{*us}
+}
+
+func (uc *userController) CurrentUser(ctx *gin.Context) {
+	userId, err := utils.GetUserIdFromHeaderToken(ctx)
+	if err != nil {
+		return
+	}
+
+	user, err := uc.userUseCase.GetOneById(*userId)
+	if err != nil {
+		utils.NewErrorResponse(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+	ctx.JSON(http.StatusOK, user)
+}
+
+func (uc *userController) GetSexOrientations(ctx *gin.Context) {
+	orientations, err := uc.userUseCase.GetSexOrientations()
+	if err != nil {
+		utils.NewErrorResponse(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+	ctx.JSON(http.StatusOK, orientations)
+}
+
+func (uc *userController) UpdateUser(ctx *gin.Context) {
+	userId, err := utils.GetUserIdFromHeaderToken(ctx)
+	if err != nil {
+		return
+	}
+
+	var userUpdateForm *domain.UserProfileUpdateForm
+	if bindError := ctx.ShouldBindJSON(&userUpdateForm); bindError != nil {
+		utils.NewErrorResponse(ctx, http.StatusBadRequest, bindError.Error())
+		return
+	}
+
+	user, err := uc.userUseCase.Update(userUpdateForm, *userId)
+
+	if err != nil {
+		utils.NewErrorResponse(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	ctx.JSON(http.StatusOK, user)
+
 }
 
 func (uc *userController) GetUserById(ctx *gin.Context) {
@@ -72,13 +121,11 @@ func (uc *userController) CreateUser(ctx *gin.Context) {
 	hashPass, _ := utils.HashPassword(*user.Password)
 	user.Password = &hashPass
 
-	u, err := uc.userUseCase.Create(&user)
+	userDto, err := uc.userUseCase.Create(&user)
 	if err != nil {
 		utils.NewErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
-
-	userDto := domain.NewUserDTO(u)
 
 	ctx.JSON(http.StatusCreated, userDto)
 }

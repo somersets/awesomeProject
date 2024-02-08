@@ -1,34 +1,21 @@
 package infrastructure
 
 import (
+	"awesomeProject/infrastructure/storage"
+	"gorm.io/driver/postgres"
 	"os"
 )
 
 type Config struct {
-	ServerPort  string
-	LoggerLevel string
-	DbConfig    *DbConfig
-}
-
-type DbConfig struct {
-	Host       string
-	Port       string
-	DbName     string
-	DbUser     string
-	DbPassword string
+	ServerPort    string
+	LoggerLevel   string
+	StorageConfig *postgres.Config
 }
 
 func NewConfig() *Config {
-	LoadEnv()
-
 	return &Config{
-		ServerPort:  os.Getenv("SERVER_PORT"),
-		LoggerLevel: "debug",
-		DbConfig: &DbConfig{
-			Host:       os.Getenv("HOST"),
-			Port:       os.Getenv("PORT"),
-			DbName:     os.Getenv("DB_NAME"),
-			DbUser:     os.Getenv("DB_USER"),
-			DbPassword: os.Getenv("DB_PASSWORD"),
-		}}
+		ServerPort:    os.Getenv("SERVER_PORT"),
+		LoggerLevel:   "debug",
+		StorageConfig: storage.NewConfig(),
+	}
 }

@@ -42,7 +42,7 @@ func (u userChatRepository) GetAllOfUser(userId int, recipientId int) (*[]userCh
 				Date:     message.CreatedAt,
 			},
 			Recipient: domain.SenderAndRecipientInfoMessage{
-				ID:       message.RecipientId,
+				ID:       0,
 				Name:     recipient.FirstName,
 				LastName: recipient.LastName,
 				Date:     message.CreatedAt,
@@ -57,9 +57,8 @@ func (u userChatRepository) GetAllOfUser(userId int, recipientId int) (*[]userCh
 
 func (u userChatRepository) SaveOne(message *domain.ChatMessageFormModel) error {
 	savedMessage := &domain.ChatMessageHistory{
-		Text:        message.Message,
-		RecipientId: message.RecipientId,
-		SenderId:    message.SenderId,
+		Text:     message.Message,
+		SenderId: message.SenderId,
 	}
 	result := u.db.Model(&domain.ChatMessageHistory{}).Create(&savedMessage)
 	if result.Error != nil {

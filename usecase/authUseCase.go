@@ -113,7 +113,7 @@ func (auc authUseCase) Register(user *domain.User) (*domain.RegisterResponseDTO,
 		return nil, err
 	}
 
-	auc.mailService.SendMail(fmt.Sprintf(
+	go auc.mailService.SendMail(fmt.Sprintf(
 		"SUCCESSFULY REGISTRATION! PLEASE GO http://localhost:3000/?server-action=user-activation&value=%s TO ACTIVATE YOUR ACCOUNT",
 		activationLink),
 	)

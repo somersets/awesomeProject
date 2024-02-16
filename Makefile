@@ -2,6 +2,8 @@ install:
 	go install cmd/main.go
 build:
 	go build -o bin/bin cmd/main.go
+air:
+	air server --port 8080
 run:
 	go run cmd/main.go
 compile:

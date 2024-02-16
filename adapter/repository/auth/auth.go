@@ -69,16 +69,6 @@ func (aR *authRepository) CreateUser(user *domain.User, activationLink string) (
 		return nil, err
 	}
 
-	/*for i := 0; i < 6; i++ {
-		if err := aR.db.Create(&domain.UserPhoto{
-			PhotoName: "",
-			UserId:    newUser.ID,
-			Order:     i + 1,
-		}).Error; err != nil {
-			return nil, err
-		}
-	}*/
-
 	return domain.NewUserDTO(newUser), nil
 }
 

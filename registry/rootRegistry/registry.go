@@ -4,6 +4,7 @@ import (
 	"awesomeProject/adapter/controller"
 	"awesomeProject/registry/authRegistry"
 	"awesomeProject/registry/tokensRegistry"
+	"awesomeProject/registry/userChatRegistry"
 	"awesomeProject/registry/userPhotoRegistry"
 	"awesomeProject/registry/userRegistry"
 	"gorm.io/gorm"
@@ -27,5 +28,6 @@ func (r *Registry) NewAppController() controller.AppController {
 		Auth:      authRegistry.NewRegistry(r.db),
 		Tokens:    tokensRegistry.NewRegistry(r.db),
 		UserPhoto: userPhotoRegistry.NewRegistry(r.db),
+		UserChat:  userChatRegistry.NewRegistry(r.db),
 	}
 }

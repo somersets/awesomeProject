@@ -25,6 +25,7 @@ func InitRoutes(c *controller.AppController) *gin.Engine {
 
 	api := router.Group("/api")
 	api.Static("/users/photos/static", "infrastructure/assets")
+	api.GET("/ws/user-chat/:roomID", c.UserChat.ServeWS)
 	{
 		auth := api.Group("/users/auth")
 		{
@@ -49,6 +50,10 @@ func InitRoutes(c *controller.AppController) *gin.Engine {
 			photos.PATCH("", c.UserPhoto.Update)
 			photos.DELETE("", c.UserPhoto.Delete)
 			photos.PATCH("/order", c.UserPhoto.SortOrder)
+		}
+		chat := api.Group("/chat", middleware.VerifyAuth)
+		{
+			chat.GET("/history", c.UserChat.GetUserMessagesHistory)
 		}
 	}
 	return router

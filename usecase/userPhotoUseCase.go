@@ -68,7 +68,7 @@ func (u userPhotoUseCase) Create(userPhotoCreateForm *domain.UserPhotoCreateForm
 		return nil, err
 	}
 
-	uploadErr := ctx.SaveUploadedFile(image, fmt.Sprintf("infrastructure/assets/%s.png", newImage.PhotoName))
+	uploadErr := ctx.SaveUploadedFile(image, fmt.Sprintf("infrastructure/assets/%s%s", newImage.PhotoName, imageExtension))
 	if uploadErr != nil {
 		utils.NewErrorResponse(ctx, http.StatusBadRequest, uploadErr.Error())
 		return nil, uploadErr

@@ -38,6 +38,9 @@ func (storage *Storage) AutoMigrate(db *gorm.DB) error {
 		&domain.UserSexualOrientationType{},
 		&domain.UserPhoto{},
 		&domain.UserActivationLink{},
+		&domain.Chat{},
+		&domain.ChatMember{},
+		&domain.ChatMessageHistory{},
 	)
 
 	if err != nil {
